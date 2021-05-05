@@ -35,6 +35,8 @@ async def main():
     # done=await uasyncio.gather(DHT11_001.get_data(),YL69_001.get_data())
     # print(done)
     while True:
-         await uasyncio.gather(pub(DHT11_001,c1),pub(YL69_001,c2)) 
+        uasyncio.create_task(pub(DHT11_001,c1))
+        uasyncio.create_task(pub(YL69_001,c2))
+        await uasyncio.sleep(5)
 
 uasyncio.run(main())
