@@ -4,9 +4,6 @@ import uasyncio
 import json
 
 class YL69(Config):
-    def __init__(self):
-        pass
-
     async def get_data(self):
         adc=ADC(0)
         soil_hum=adc.read()
@@ -15,5 +12,5 @@ class YL69(Config):
 
 if __name__=='__main__':
     yl69=YL69()
-    soil_hum=uasyncio.run(yl69.get_data())
-    print(soil_hum)
+    data=uasyncio.run(yl69.get_data())
+    print(data)
