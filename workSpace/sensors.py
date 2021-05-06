@@ -51,11 +51,22 @@ async def main(devices):
             uasyncio.create_task(pub(device,device.client))
         await uasyncio.sleep(5)
 
-if __name__=='__main__':
+def upload_data():
     try:
         devices=initialize()
         connect_all(devices)
         uasyncio.run(main(devices))
     finally:
         disconnect_all(devices)
+
+if __name__=='__main__':
+    upload_data()
+    
+# if __name__=='__main__':
+#     try:
+#         devices=initialize()
+#         connect_all(devices)
+#         uasyncio.run(main(devices))
+#     finally:
+#         disconnect_all(devices)
 
