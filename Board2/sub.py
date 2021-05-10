@@ -29,9 +29,9 @@ def led_initialize():
     leds.append(red)
 
     for led in leds:
-        led.sub_topic='/led/{}/switch'.format(led.client_id)
+        led.sub_topic='/led/switch'
         led.client=create_client(led)
-        led.client.set_callback(sub_cb)
+        led.client.set_callback(sub_cb)      
     
 
 def led_connect_all():
@@ -51,7 +51,7 @@ def main():
     global leds
     while True:
         for led in leds:
-            led.check_msg()
+            led.client.check_msg()
 
 def led_wait():
     try:
