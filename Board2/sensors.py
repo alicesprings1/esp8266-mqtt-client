@@ -13,7 +13,7 @@ def sub_cb(topic,msg):
     leds[msg['led']].shine(msg['status'])      
 
 def create_client(device):
-    return MQTTClient(device.client_id,device.server,device.port,device.user,device.password)
+    return MQTTClient(device.client_id,device.server,device.port,device.user,device.password,keepalive=60)
 
 def led_initialize():
     global leds
@@ -56,48 +56,41 @@ def led_disconnect_all():
         led.p.off()
         print('{} disconnected'.format(led.client_id))
 
-async def led():
+def device_disconnect(device):
+    device.client.disconnect()
+    print('{} disconnected'.format(device.client_id))
+
+async def led(device):
     global leds
-    for led in leds.values():
-        led.client.check_msg()
-
-async def rainsensor(device):
-    payload=await uasyncio.wait_for(device.get_data(),None)
-    device.client.publish(device.pub_topic,payload)
-    print('{} published to topic {}'.format(device.client_id,device.pub_topic))
-
-async def led_loop():
-    while True:
-        uasyncio.create_task(led())
-        await uasyncio.sleep_ms(5)
-
-async def rainsensor_loop(device):
-    while True:
-        uasyncio.create_task(rainsensor(device))
-        await uasyncio.sleep(5)
-
-# async def main_loop(device):
-#     while True:
-#         uasyncio.create_task(led_loop())
-#         uasyncio.create_task(rainsensor_main(device))
-#         await uasyncio.sleep(5)
-
-def main_process():
     try:
-        led_initialize()
-        led_connect_all()
-        RS_001=rainsensor_initialize()
-        RS_001.client.connect()
-        uasyncio.run(rainsensor_loop(RS_001))
-        uasyncio.run(led_loop())
-        
-        # led_loop()
-        # uasyncio.gather(led_loop(),rainsensor_loop(RS_001))
-
+        while True:
+            for led in leds.values():
+                led.client.check_msg()
+            await uasyncio.sleep_ms(5)
     finally:
         led_disconnect_all()
-        RS_001.client.disconnect()
-        print('RS_001 disconnected')
+        device_disconnect(device)
+
+async def rainsensor(device):
+    try:
+        while True:
+            payload=device.get_data()
+            device.client.publish(device.pub_topic,payload)
+            print('{} published to topic {}'.format(device.client_id,device.pub_topic))
+            await uasyncio.sleep(5)
+    finally:
+        device_disconnect(device)
+        led_disconnect_all()
+
+def main_process():
+    led_initialize()
+    led_connect_all()
+    RS_001=rainsensor_initialize()
+    RS_001.client.connect()
+    loop=uasyncio.get_event_loop()
+    loop.create_task(led(RS_001))
+    loop.create_task(rainsensor(RS_001))
+    loop.run_forever()       
 
 if __name__=='__main__':
     main_process()
