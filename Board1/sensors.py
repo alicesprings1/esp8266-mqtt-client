@@ -3,11 +3,12 @@ import json
 import uasyncio
 from YL69 import YL69
 from DHT11 import DHT11
+from LightSensor import LS
 from simple import MQTTClient
 
 
 def create_client(device):
-    return MQTTClient(device.client_id,device.server,device.port,device.user,device.password)
+    return MQTTClient(device.client_id,device.server,device.port,device.user,device.password,keepalive=60)
 
 def initialize():
     devices=[]
@@ -23,12 +24,15 @@ def initialize():
     YL69_001.pub_topic='/YL69/{}/report-property'.format(YL69_001.client_id)
     YL69_001.client=create_client(YL69_001)
     devices.append(YL69_001)
+
+    LS_001=LS(pin=4)
+    LS_001.client_id='LS_001'
+    LS_001.pub_topic='/LS/{}/report-property'.format(LS_001.client_id)
+    LS_001.client=create_client(LS_001)
+    devices.append(LS_001)
         
     return devices
-    # c1=create_client(DHT11_001)
-    # c1.connect()
-    # c2=create_client(YL69_001)
-    # c2.connect()
+    
 def connect_all(devices):
     for device in devices:
         device.client.connect()
@@ -45,8 +49,6 @@ async def pub(device,client):
 async def main(devices):
     
     while True:
-        # uasyncio.create_task(pub(DHT11_001,c1))
-        # uasyncio.create_task(pub(YL69_001,c2))
         for device in devices:
             uasyncio.create_task(pub(device,device.client))
         await uasyncio.sleep(5)
@@ -62,11 +64,3 @@ def upload_data():
 if __name__=='__main__':
     upload_data()
     
-# if __name__=='__main__':
-#     try:
-#         devices=initialize()
-#         connect_all(devices)
-#         uasyncio.run(main(devices))
-#     finally:
-#         disconnect_all(devices)
-
