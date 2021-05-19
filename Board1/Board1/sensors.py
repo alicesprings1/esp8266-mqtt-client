@@ -13,20 +13,17 @@ def create_client(device):
 def initialize():
     devices=[]
 
-    DHT11_001=DHT11(pin=2)
-    DHT11_001.client_id='DHT11_001'
+    DHT11_001=DHT11('DHT11_001',pin=2)
     DHT11_001.pub_topic='/DHT11/{}/report-property'.format(DHT11_001.client_id)
     DHT11_001.client=create_client(DHT11_001)
     devices.append(DHT11_001)
 
-    YL69_001=YL69()
-    YL69_001.client_id='YL69_001'
+    YL69_001=YL69('YL69_001')
     YL69_001.pub_topic='/YL69/{}/report-property'.format(YL69_001.client_id)
     YL69_001.client=create_client(YL69_001)
     devices.append(YL69_001)
 
-    LS_001=LS(pin=4)
-    LS_001.client_id='LS_001'
+    LS_001=LS('LS_001',pin=4)
     LS_001.pub_topic='/LS/{}/report-property'.format(LS_001.client_id)
     LS_001.client=create_client(LS_001)
     devices.append(LS_001)
@@ -41,16 +38,16 @@ def disconnect_all(devices):
     for device in devices:
         device.client.disconnect()
 
-async def pub(device,client):
+async def pub(device):
     payload=await uasyncio.wait_for(device.get_data(),None)
-    client.publish(device.pub_topic,payload)
+    device.client.publish(device.pub_topic,payload)
     print('{} published to topic {}'.format(device.client_id,device.pub_topic))
 
 async def main(devices):
     
     while True:
         for device in devices:
-            uasyncio.create_task(pub(device,device.client))
+            uasyncio.create_task(pub(device))
         await uasyncio.sleep(5)
 
 def upload_data():

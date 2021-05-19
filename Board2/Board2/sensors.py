@@ -18,16 +18,13 @@ def create_client(device):
 def led_initialize():
     global leds
 
-    yellow=LED(pin=5)
-    yellow.client_id='yellow'
+    yellow=LED('yellow',pin=5)
     leds['yellow']=yellow
 
-    green=LED(pin=4)
-    green.client_id='green'
+    green=LED('green',pin=4)
     leds['green']=green
 
-    red=LED(pin=14)
-    red.client_id='red'
+    red=LED('red',pin=14)
     leds['red']=red
 
     for led in leds.values():
@@ -36,8 +33,7 @@ def led_initialize():
         led.client.set_callback(sub_cb)      
     
 def rainsensor_initialize():
-    device=RainSensor()
-    device.client_id='RS_001'
+    device=RainSensor('RS_001')
     device.pub_topic='/RS/{}/report-property'.format(device.client_id)
     device.client=create_client(device)
     return device
@@ -53,14 +49,14 @@ def led_disconnect_all():
     global leds
     for led in leds.values():
         led.client.disconnect()
-        led.p.off()
+        led.shine('off')
         print('{} disconnected'.format(led.client_id))
 
 def device_disconnect(device):
     device.client.disconnect()
     print('{} disconnected'.format(device.client_id))
 
-async def led(device):
+async def led_loop(device):
     global leds
     try:
         while True:
@@ -71,7 +67,7 @@ async def led(device):
         led_disconnect_all()
         device_disconnect(device)
 
-async def rainsensor(device):
+async def rainsensor_loop(device):
     try:
         while True:
             payload=device.get_data()
@@ -88,12 +84,9 @@ def main_process():
     RS_001=rainsensor_initialize()
     RS_001.client.connect()
     loop=uasyncio.get_event_loop()
-    loop.create_task(led(RS_001))
-    loop.create_task(rainsensor(RS_001))
+    loop.create_task(led_loop(RS_001))
+    loop.create_task(rainsensor_loop(RS_001))
     loop.run_forever()       
 
 if __name__=='__main__':
     main_process()
-
-
-
