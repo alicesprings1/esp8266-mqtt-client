@@ -6,6 +6,6 @@ if __name__=='__main__':
     wlan=network.WLAN(network.STA_IF)
     wlan.active(True)
     while not wlan.isconnected():
-        wlan.connect('Alice','HYXdlh666')
+        wlan.connect('wifi_name','wifi_password')
         print(wlan.isconnected())
     sensors.main_process()
