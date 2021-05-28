@@ -33,10 +33,12 @@ def initialize():
 def connect_all(devices):
     for device in devices:
         device.client.connect()
+        print('{} connected to server'.format(device.client_id))
 
 def disconnect_all(devices):
     for device in devices:
         device.client.disconnect()
+        print('{} disconnected'.format(device.client_id))
 
 async def pub(device):
     payload=await uasyncio.wait_for(device.get_data(),None)

@@ -56,37 +56,53 @@ def device_disconnect(device):
     device.client.disconnect()
     print('{} disconnected'.format(device.client_id))
 
-async def led_loop(device):
+async def led_loop():
     global leds
-    try:
-        while True:
-            for led in leds.values():
-                led.client.check_msg()
-            await uasyncio.sleep_ms(5)
-    finally:
-        led_disconnect_all()
-        device_disconnect(device)
+    while True:
+        for led in leds.values():
+            led.client.check_msg()
+        await uasyncio.sleep(0)
+    
 
 async def rainsensor_loop(device):
-    try:
-        while True:
-            payload=device.get_data()
-            device.client.publish(device.pub_topic,payload)
-            print('{} published to topic {}'.format(device.client_id,device.pub_topic))
-            await uasyncio.sleep(5)
-    finally:
-        device_disconnect(device)
-        led_disconnect_all()
+    while True:
+        payload=device.get_data()
+        device.client.publish(device.pub_topic,payload)
+        print('{} published to topic {}'.format(device.client_id,device.pub_topic))
+        await uasyncio.sleep(5)
+
+async def led_ping(period):
+    global leds
+    while True:
+        await uasyncio.sleep(period)
+        for led in leds.values():
+            led.client.ping()
+            print('led {} ping'.format(led.client_id))
+
+def set_global_exception():
+    def handle_exception(loop, context):
+        import sys
+        sys.print_exception(context["exception"])
+        sys.exit()
+    loop = uasyncio.get_event_loop()
+    loop.set_exception_handler(handle_exception)
 
 def main_process():
-    led_initialize()
-    led_connect_all()
-    RS_001=rainsensor_initialize()
-    RS_001.client.connect()
-    loop=uasyncio.get_event_loop()
-    loop.create_task(led_loop(RS_001))
-    loop.create_task(rainsensor_loop(RS_001))
-    loop.run_forever()       
+    try:
+        led_initialize()
+        led_connect_all()
+        RS_001=rainsensor_initialize()
+        RS_001.client.connect()
+        set_global_exception()
+        loop=uasyncio.get_event_loop()
+        loop.create_task(led_loop())
+        loop.create_task(rainsensor_loop(RS_001))
+        loop.create_task(led_ping(period=60))
+        loop.run_forever() 
+    finally:
+        led_disconnect_all()
+        device_disconnect(RS_001)
+        uasyncio.new_event_loop()     
 
 if __name__=='__main__':
     main_process()
